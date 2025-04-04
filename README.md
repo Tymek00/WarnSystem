@@ -14,17 +14,11 @@ EXILED >= 9.5.1
 # ⚙️ Configuration
 ```
 warn_system:
-# ON/OFF
   is_enabled: true
-  # Debug Mode
   debug: false
-  # Nazwa pliku do przechowywania danych warnów/notatek w folderze PluginData.
   data_file_name: 'WarnData.json'
-  # Wymagana permisja do używania warnów.
   required_permission: 'perm.warn.adm'
-  # Główna nazwa komendy, której używa plugin.
   command_prefix: 'warn'
-  # Aliasy komendy (alternatywne nazwy)
   command_aliases:
   - 'ws'
   - 'warns'
