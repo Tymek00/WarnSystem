@@ -11,8 +11,8 @@ namespace WarnSystem
     {
         public override string Name => "WarnSystem";
         public override string Author => "Tymek";
-        public override Version Version => new Version(1, 0, 0);
-        public override Version RequiredExiledVersion => new Version(9, 5, 1);
+        public override Version Version => new Version(2, 0, 0);
+        public override Version RequiredExiledVersion => new Version(9, 5, 2);
 
         public static WarnPlugin Instance { get; private set; }
 
@@ -28,7 +28,7 @@ namespace WarnSystem
             ServerEvents.WaitingForPlayers += _eventHandlers.OnWaitingForPlayers;
             ServerEvents.RestartingRound += _eventHandlers.OnRestartingRound;
 
-            Log.Info($"{Name} v{Version} by {Author} został załadowany.");
+            Log.Info($"{Name} v{Version} by {Author} has been loaded.");
             base.OnEnabled();
         }
 
@@ -37,8 +37,8 @@ namespace WarnSystem
             ServerEvents.WaitingForPlayers -= _eventHandlers.OnWaitingForPlayers;
             ServerEvents.RestartingRound -= _eventHandlers.OnRestartingRound;
 
-            DataHandler?.SaveData(); 
-            Log.Info($"{Name} został wyłączony. Zapisano dane (jeśli były dostępne).");
+            DataHandler?.SaveData();
+            Log.Info($"{Name} has been disabled. Data saved (if available).");
 
             _eventHandlers = null;
             DataHandler = null;
@@ -54,15 +54,14 @@ namespace WarnSystem
 
         public void OnWaitingForPlayers()
         {
-            Log.Debug("WaitingForPlayers: Ładowanie danych...");
+            Log.Debug("WaitingForPlayers: Loading data...");
             _plugin.DataHandler?.LoadData();
         }
 
         public void OnRestartingRound()
         {
-            Log.Debug("RestartingRound: Zapisywanie danych...");
+            Log.Debug("RestartingRound: Saving data...");
             _plugin.DataHandler?.SaveData();
         }
-
     }
 }

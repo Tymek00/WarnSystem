@@ -38,7 +38,7 @@ namespace WarnSystem.Handlers
                     if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
                     {
                         Directory.CreateDirectory(directoryPath);
-                        Log.Debug($"[DataHandler] Utworzono katalog danych: {directoryPath}");
+                        Log.Debug($"[DataHandler] Created data directory: {directoryPath}");
                     }
 
                     if (File.Exists(_filePath))
@@ -48,24 +48,24 @@ namespace WarnSystem.Handlers
 
                         _nextId = _warnEntries.Any() ? _warnEntries.Max(e => e.Id) + 1 : 1;
 
-                        Log.Info($"[DataHandler] Załadowano {_warnEntries.Count} wpisów z {_filePath}. Następne ID: {_nextId}");
+                        Log.Info($"[DataHandler] Loaded {_warnEntries.Count} entries from {_filePath}. Next ID: {_nextId}");
                     }
                     else
                     {
-                        Log.Info($"[DataHandler] Plik danych {_filePath} nie istnieje. Zostanie utworzony przy pierwszym zapisie.");
+                        Log.Info($"[DataHandler] Data file {_filePath} does not exist. It will be created on first save.");
                         _warnEntries = new List<WarnEntry>();
                         _nextId = 1;
                     }
                 }
                 catch (JsonException jsonEx)
                 {
-                    Log.Error($"[DataHandler] Błąd deserializacji pliku {_filePath}: {jsonEx.Message}. Rozpoczynanie z pustą listą.");
+                    Log.Error($"[DataHandler] Deserialization error for file {_filePath}: {jsonEx.Message}. Starting with an empty list.");
                     _warnEntries = new List<WarnEntry>();
                     _nextId = 1;
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[DataHandler] Nie udało się załadować danych z pliku {_filePath}: {ex.Message}");
+                    Log.Error($"[DataHandler] Failed to load data from file {_filePath}: {ex.Message}");
                     Log.Debug(ex.ToString());
                     _warnEntries = new List<WarnEntry>();
                     _nextId = 1;
@@ -83,16 +83,16 @@ namespace WarnSystem.Handlers
                     if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
                     {
                         Directory.CreateDirectory(directoryPath);
-                        Log.Debug($"[DataHandler] Utworzono katalog danych przed zapisem: {directoryPath}");
+                        Log.Debug($"[DataHandler] Created data directory before saving: {directoryPath}");
                     }
 
                     string json = JsonConvert.SerializeObject(_warnEntries, Newtonsoft.Json.Formatting.Indented);
                     File.WriteAllText(_filePath, json);
-                    Log.Debug($"[DataHandler] Zapisano {_warnEntries.Count} wpisów do {_filePath}.");
+                    Log.Debug($"[DataHandler] Saved {_warnEntries.Count} entries to {_filePath}.");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[DataHandler] Nie udało się zapisać danych do pliku {_filePath}: {ex.Message}");
+                    Log.Error($"[DataHandler] Failed to save data to file {_filePath}: {ex.Message}");
                     Log.Debug(ex.ToString());
                 }
             }
@@ -103,7 +103,7 @@ namespace WarnSystem.Handlers
             lock (_lock)
             {
                 string adminUserId = admin?.UserId ?? "SERVER";
-                string adminNickname = admin?.Nickname ?? "Konsola Serwera";
+                string adminNickname = admin?.Nickname ?? "Server Console";
 
                 if (string.IsNullOrWhiteSpace(targetNickname))
                     targetNickname = $"({targetUserId})";
@@ -112,8 +112,8 @@ namespace WarnSystem.Handlers
 
                 _warnEntries.Add(newEntry);
                 _nextId++;
-                SaveData(); 
-                Log.Info($"[DataHandler] Dodano wpis {type} (ID: {newEntry.Id}) dla {targetNickname} ({targetUserId}) przez {adminNickname} ({adminUserId}).");
+                SaveData();
+                Log.Info($"[DataHandler] Added {type} entry (ID: {newEntry.Id}) for {targetNickname} ({targetUserId}) by {adminNickname} ({adminUserId}).");
                 return newEntry;
             }
         }
@@ -129,17 +129,17 @@ namespace WarnSystem.Handlers
                     if (removed)
                     {
                         SaveData();
-                        Log.Info($"[DataHandler] Usunięto wpis ID: {entryId} (Typ: {deletedEntry.Type}, Gracz: {deletedEntry.PlayerNickname} {deletedEntry.PlayerUserId}).");
+                        Log.Info($"[DataHandler] Deleted entry ID: {entryId} (Type: {deletedEntry.Type}, Player: {deletedEntry.PlayerNickname} {deletedEntry.PlayerUserId}).");
                         return true;
                     }
                     else
                     {
-                        Log.Warn($"[DataHandler] Nie udało się usunąć wpisu ID: {entryId} z listy, mimo że został znaleziony.");
+                        Log.Warn($"[DataHandler] Failed to remove entry ID: {entryId} from the list, even though it was found.");
                     }
                 }
                 else
                 {
-                    Log.Debug($"[DataHandler] Nie znaleziono wpisu o ID: {entryId} do usunięcia.");
+                    Log.Debug($"[DataHandler] No entry with ID: {entryId} found for deletion.");
                 }
                 deletedEntry = null;
                 return false;
