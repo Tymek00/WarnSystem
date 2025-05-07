@@ -1,6 +1,7 @@
 ﻿using System;
 using Exiled.API.Features;
 using Exiled.API.Interfaces;
+using HarmonyLib;
 using WarnSystem.Handlers;
 
 using ServerEvents = Exiled.Events.Handlers.Server;
@@ -19,6 +20,8 @@ namespace WarnSystem
         public DataHandler DataHandler { get; private set; }
         private EventHandlers _eventHandlers;
 
+        private Harmony _h { get; set; } 
+
         public override void OnEnabled()
         {
             Instance = this;
@@ -27,6 +30,9 @@ namespace WarnSystem
 
             ServerEvents.WaitingForPlayers += _eventHandlers.OnWaitingForPlayers;
             ServerEvents.RestartingRound += _eventHandlers.OnRestartingRound;
+
+            _h = new($"WarnSystem-Tymek-{DateTime.Now.Ticks}");
+            _h.PatchAll();
 
             Log.Info($"{Name} v{Version} by {Author} has been loaded.");
             base.OnEnabled();
@@ -39,6 +45,9 @@ namespace WarnSystem
 
             DataHandler?.SaveData();
             Log.Info($"{Name} has been disabled. Data saved (if available).");
+
+            _h = null;
+            _h.UnpatchAll();
 
             _eventHandlers = null;
             DataHandler = null;
