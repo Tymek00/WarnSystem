@@ -27,15 +27,14 @@ namespace WarnSystem.Models
             Reason = reason ?? string.Empty;
             Timestamp = DateTime.UtcNow;
         }
-
         public override string ToString()
         {
             string formattedTimestamp = Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
             return $"ID {Type}: {Id}\n" +
-                   $"Nick Gracza: {PlayerNickname} ({PlayerUserId})\n" +
-                   $"Nick Admina: {AdminNickname} ({AdminUserId})\n" +
-                   $"Powód/Treść: {Reason}\n" +
-                   $"Data: {formattedTimestamp} UTC\n" + 
+                   $"Player Nickname: {PlayerNickname} ({PlayerUserId})\n" +
+                   $"Admin Nickname: {AdminNickname} ({AdminUserId})\n" +
+                   $"Reason/Content: {Reason}\n" +
+                   $"Date: {formattedTimestamp} UTC\n" +
                    "--------------------";
         }
     }

@@ -11,16 +11,19 @@ namespace WarnSystem
         [Description("Debug Mode")]
         public bool Debug { get; set; } = false;
 
-        [Description("Nazwa pliku do przechowywania danych warnów/notatek w folderze PluginData.")]
+        [Description("Name of the file to store warn/notes data in the PluginData folder.")]
         public string DataFileName { get; set; } = "WarnData.json";
 
-        [Description("Wymagana permisja do używania warnów.")]
+        [Description("Required permission to use warns.")]
         public string RequiredPermission { get; set; } = "perm.warn.adm";
 
-        [Description("Główna nazwa komendy, której używa plugin.")]
+        [Description("Main command name used by the plugin.")]
         public string CommandPrefix { get; set; } = "warn";
 
-        [Description("Aliasy komendy (alternatywne nazwy)")]
+        [Description("Command aliases (alternative names)")]
         public string[] CommandAliases { get; set; } = { "ws", "warns" };
+
+        [Description("Language code for localization (e.g., 'en' for English, 'ru' for Russian).")]
+        public string Language { get; set; } = "en";
     }
 }

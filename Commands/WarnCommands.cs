@@ -7,38 +7,39 @@ using Exiled.API.Features;
 using Exiled.Permissions.Extensions;
 using WarnSystem.Models;
 using WarnSystem.Handlers;
+using WarnSystem.Handlers.WarnSystem;
 
 namespace WarnSystem.Commands
 {
     [CommandHandler(typeof(RemoteAdminCommandHandler))]
-    public class WarnCommands : CommandSystem.ICommand 
+    public class WarnCommands : ICommand
     {
-        public string Command => WarnPlugin.Instance?.Config?.CommandPrefix ?? "warn"; 
+        public string Command => WarnPlugin.Instance?.Config?.CommandPrefix ?? "warn";
 
-        public string[] Aliases => WarnPlugin.Instance?.Config?.CommandAliases ?? new[] { "ws", "warns" }; 
+        public string[] Aliases => WarnPlugin.Instance?.Config?.CommandAliases ?? new[] { "ws", "warns" };
 
-        public string Description => "Zarządza systemem ostrzeżeń i notatek graczy.";
+        public string Description => Localization.GetTranslation("CommandDescription", WarnPlugin.Instance.Config.Language);
 
-        public bool Execute(ArraySegment<string> arguments, CommandSystem.ICommandSender sender, out string response) 
+        public bool Execute(ArraySegment<string> arguments, CommandSystem.ICommandSender sender, out string response)
         {
+            string language = WarnPlugin.Instance.Config.Language;
             string requiredPermission = WarnPlugin.Instance.Config.RequiredPermission;
             if (!sender.CheckPermission(requiredPermission))
             {
-                response = $"Brak uprawnień! Wymagana permisja: {requiredPermission}";
+                response = Localization.GetTranslation("InsufficientPermissions", language, requiredPermission);
                 return false;
             }
 
             if (WarnPlugin.Instance.DataHandler == null)
             {
-                response = "Błąd: System ostrzeżeń nie został poprawnie zainicjowany. Skontaktuj się z administratorem serwera.";
+                response = Localization.GetTranslation("SystemNotInitialized", language);
                 Log.Error("WarnCommands Execute: DataHandler is null!");
                 return false;
             }
 
-
             if (arguments.Count == 0)
             {
-                response = GetHelpMessage();
+                response = GetHelpMessage(language);
                 return true;
             }
 
@@ -49,37 +50,33 @@ namespace WarnSystem.Commands
             {
                 case "check":
                 case "checkwarn":
-                    return HandleCheckWarn(subArguments, sender, out response);
+                    return HandleCheckWarn(subArguments, sender, language, out response);
                 case "add":
                 case "warn":
-                    return HandleWarn(subArguments, sender, out response);
+                    return HandleWarn(subArguments, sender, language, out response);
                 case "note":
-                    return HandleNote(subArguments, sender, out response);
+                    return HandleNote(subArguments, sender, language, out response);
                 case "delete":
                 case "del":
                 case "delwarn":
                 case "deletewarn":
-                    return HandleDeleteWarn(subArguments, sender, out response);
+                    return HandleDeleteWarn(subArguments, sender, language, out response);
                 case "help":
                 default:
-                    response = GetHelpMessage();
+                    response = GetHelpMessage(language);
                     return true;
             }
         }
-        private string GetHelpMessage()
+
+        private string GetHelpMessage(string language)
         {
-            string cmd = Command;
-            return $"System Warnów/Notatek - Dostępne komendy:\n" +
-                   $".{cmd} check <ID Gracza/@UserId> - Wyświetla warny i notatki gracza.\n" +
-                   $".{cmd} add <ID Gracza/@UserId> <Powód> - Daje warna graczowi.\n" +
-                   $".{cmd} note <ID Gracza/@UserId> <Treść notatki> - Dodaje notatkę o graczu.\n" +
-                   $".{cmd} delete <ID Warna/Notatki> - Usuwa wpis o podanym ID.";
+            return Localization.GetTranslation("NoArgumentsHelp", language, Command);
         }
 
-        private bool TryGetPlayerData(string identifier, out string userId, out string nickname, out string errorResponse)
+        private bool TryGetPlayerData(string identifier, string language, out string userId, out string nickname, out string errorResponse)
         {
             Player targetPlayer = Player.Get(identifier);
-            if (targetPlayer != null) 
+            if (targetPlayer != null)
             {
                 userId = targetPlayer.UserId;
                 nickname = targetPlayer.Nickname;
@@ -97,21 +94,20 @@ namespace WarnSystem.Commands
             {
                 userId = null;
                 nickname = null;
-                errorResponse = "Nie znaleziono gracza online o podanym ID. Aby wykonać akcję dla gracza offline, podaj jego pełne UserId (np. 123456789@steam lub 12345@discord).";
+                errorResponse = Localization.GetTranslation("PlayerNotFound", language);
                 return false;
             }
         }
 
-
-        private bool HandleCheckWarn(string[] args, CommandSystem.ICommandSender sender, out string response)
+        private bool HandleCheckWarn(string[] args, CommandSystem.ICommandSender sender, string language, out string response)
         {
             if (args.Length != 1)
             {
-                response = $"Poprawne użycie: .{Command} check <ID Gracza/@UserId>";
+                response = Localization.GetTranslation("CheckWarnUsage", language, Command);
                 return false;
             }
 
-            if (!TryGetPlayerData(args[0], out string targetUserId, out string targetNickname, out string errorMsg))
+            if (!TryGetPlayerData(args[0], language, out string targetUserId, out string targetNickname, out string errorMsg))
             {
                 response = errorMsg;
                 return false;
@@ -121,12 +117,11 @@ namespace WarnSystem.Commands
 
             if (entries.Count == 0)
             {
-                response = $"Nie znaleziono żadnych warnów ani notatek dla gracza {targetNickname} (UserId: {targetUserId}).";
+                response = Localization.GetTranslation("NoWarnsOrNotes", language, targetNickname, targetUserId);
                 return true;
             }
 
-            StringBuilder sb = new StringBuilder($"Warny/Notatki dla gracza {targetNickname} (UserId: {targetUserId}):\n");
-            sb.AppendLine("--------------------");
+            StringBuilder sb = new StringBuilder(Localization.GetTranslation("WarnsNotesHeader", language, targetNickname, targetUserId));
             foreach (var entry in entries.OrderByDescending(e => e.Timestamp))
             {
                 sb.AppendLine(entry.ToString());
@@ -136,18 +131,18 @@ namespace WarnSystem.Commands
             return true;
         }
 
-        private bool HandleWarn(string[] args, CommandSystem.ICommandSender sender, out string response)
+        private bool HandleWarn(string[] args, CommandSystem.ICommandSender sender, string language, out string response)
         {
             if (args.Length < 2)
             {
-                response = $"Poprawne użycie: .{Command} add <ID Gracza/@UserId> <Powód>";
+                response = Localization.GetTranslation("WarnUsage", language, Command);
                 return false;
             }
 
             string targetIdentifier = args[0];
             string reason = string.Join(" ", args.Skip(1));
 
-            if (!TryGetPlayerData(targetIdentifier, out string targetUserId, out string targetNickname, out string errorMsg))
+            if (!TryGetPlayerData(targetIdentifier, language, out string targetUserId, out string targetNickname, out string errorMsg))
             {
                 response = errorMsg;
                 return false;
@@ -156,22 +151,22 @@ namespace WarnSystem.Commands
             Player admin = Player.Get(sender);
             WarnEntry newWarn = WarnPlugin.Instance.DataHandler.AddEntry("Warn", targetUserId, targetNickname, admin, reason);
 
-            response = $"Dodano warna (ID: {newWarn.Id}) dla gracza {targetNickname} (UserId: {targetUserId}). Powód: {reason}";
+            response = Localization.GetTranslation("WarnAdded", language, newWarn.Id, targetNickname, targetUserId, reason);
             return true;
         }
 
-        private bool HandleNote(string[] args, CommandSystem.ICommandSender sender, out string response)
+        private bool HandleNote(string[] args, CommandSystem.ICommandSender sender, string language, out string response)
         {
             if (args.Length < 2)
             {
-                response = $"Poprawne użycie: .{Command} note <ID Gracza/@UserId> <Treść notatki>";
+                response = Localization.GetTranslation("NoteUsage", language, Command);
                 return false;
             }
 
             string targetIdentifier = args[0];
             string noteContent = string.Join(" ", args.Skip(1));
 
-            if (!TryGetPlayerData(targetIdentifier, out string targetUserId, out string targetNickname, out string errorMsg))
+            if (!TryGetPlayerData(targetIdentifier, language, out string targetUserId, out string targetNickname, out string errorMsg))
             {
                 response = errorMsg;
                 return false;
@@ -180,33 +175,33 @@ namespace WarnSystem.Commands
             Player admin = Player.Get(sender);
             WarnEntry newNote = WarnPlugin.Instance.DataHandler.AddEntry("Note", targetUserId, targetNickname, admin, noteContent);
 
-            response = $"Dodano notatkę (ID: {newNote.Id}) dla gracza {targetNickname} (UserId: {targetUserId}).";
+            response = Localization.GetTranslation("NoteAdded", language, newNote.Id, targetNickname, targetUserId);
             return true;
         }
 
-        private bool HandleDeleteWarn(string[] args, CommandSystem.ICommandSender sender, out string response)
+        private bool HandleDeleteWarn(string[] args, CommandSystem.ICommandSender sender, string language, out string response)
         {
             if (args.Length != 1)
             {
-                response = $"Poprawne użycie: .{Command} delete <ID Warna/Notatki>";
+                response = Localization.GetTranslation("DeleteUsage", language, Command);
                 return false;
             }
 
             if (!int.TryParse(args[0], out int entryId))
             {
-                response = $"Niepoprawne ID: '{args[0]}'. ID musi być liczbą całkowitą.";
+                response = Localization.GetTranslation("InvalidId", language, args[0]);
                 return false;
             }
 
             if (WarnPlugin.Instance.DataHandler.DeleteEntry(entryId, out WarnEntry deletedEntry))
             {
-                response = $"Usunięto wpis typu '{deletedEntry.Type}' o ID {entryId} (dotyczący gracza {deletedEntry.PlayerNickname} - {deletedEntry.PlayerUserId}).";
+                response = Localization.GetTranslation("EntryDeleted", language, deletedEntry.Type, entryId, deletedEntry.PlayerNickname, deletedEntry.PlayerUserId);
                 return true;
             }
             else
             {
-                response = $"Nie znaleziono wpisu o ID {entryId} lub wystąpił błąd podczas usuwania.";
-                return false; 
+                response = Localization.GetTranslation("EntryNotFound", language, entryId);
+                return false;
             }
         }
     }
