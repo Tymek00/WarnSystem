@@ -16,7 +16,7 @@ namespace WarnSystem
 
         public static WarnPlugin Instance { get; private set; }
 
-        public DataHandler DataHandlers { get; private set; }
+        public DataHandler DataHandler { get; private set; }
         private EventHandlers _eventHandlers;
 
         public override void OnEnabled()
